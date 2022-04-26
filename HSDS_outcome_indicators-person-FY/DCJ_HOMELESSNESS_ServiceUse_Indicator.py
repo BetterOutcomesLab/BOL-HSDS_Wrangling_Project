@@ -48,6 +48,7 @@ def aggregate_to_person_FY(df_homelessness,financial_year_start,financial_year_e
   #keep only the columns needed and remove duplicates 
   usecols = ["ppn"] + usecols
   df_homelessness = df_homelessness[usecols]
+  df_homelessness = df_homelessness.groupby('ppn').max().reset_index() 
   df_homelessness = df_homelessness.drop_duplicates()
   
   return df_homelessness
