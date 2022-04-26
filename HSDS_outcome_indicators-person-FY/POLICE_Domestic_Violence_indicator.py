@@ -38,6 +38,7 @@ def aggregate_to_person_FY(df_victims_sensitive,financial_year_start,financial_y
   #keep only the columns needed and remove duplicates 
   usecols = ["ppn"] + usecols
   df_victims_sensitive = df_victims_sensitive[usecols]
+  df_victims_sensitive = df_victims_sensitive.groupby('ppn').max().reset_index()
   df_victims_sensitive = df_victims_sensitive.drop_duplicates()
   
   return df_victims_sensitive
