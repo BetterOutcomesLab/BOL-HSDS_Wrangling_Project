@@ -47,6 +47,7 @@ def aggregate_to_person_FY(df_suspension,financial_year_start,financial_year_end
   #keep only the columns needed and remove duplicates 
   usecols = ["ppn"] + usecols
   df_suspension = df_suspension[usecols]
+  df_suspension = df_suspension.groupby('ppn').max().reset_index()
   df_suspension = df_suspension.drop_duplicates()
   
   return df_suspension
