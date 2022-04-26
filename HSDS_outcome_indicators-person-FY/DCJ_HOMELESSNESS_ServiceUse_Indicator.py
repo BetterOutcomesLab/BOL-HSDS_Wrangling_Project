@@ -10,7 +10,7 @@ OutputDir = "../HSDS/POLICE/"
 outcome_file_name = "DCJ_HOMELESSNESS_ServiceUse_person_FY_indicator"
 
 #set the start and end for the range of financial years
-financial_year_start = '1415'
+financial_year_start = '1011'
 financial_year_end = '1819'
 
 def read_homelessness_data():
