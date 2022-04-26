@@ -48,6 +48,7 @@ def aggregate_to_person_FY(df_jj_admissions,financial_year_start,financial_year_
   #keep only the columns needed and remove duplicates 
   usecols = ["ppn"] + usecols
   df_jj_admissions = df_jj_admissions[usecols]
+  df_jj_admissions = df_jj_admissions.groupby('ppn').max().reset_index()
   df_jj_admissions = df_jj_admissions.drop_duplicates()
   
   return df_jj_admissions
