@@ -15,7 +15,7 @@ financial_year_end = '1819'
 
 def read_homelessness_data():
 
-   df_homelessness = pd.read_csv(inputDir + 'homelessness_nsw_1518_1920.csv',usecols=['ppn', 'Initial_SP_Start','Latest_SP_Finished'],parse_dates=['Event_Reported_date'],infer_datetime_format=True)
+   df_homelessness = pd.read_csv(inputDir + 'homelessness_nsw_1518_1920.csv',usecols=['ppn', 'Initial_SP_Start','Latest_SP_Finished'],parse_dates=['Initial_SP_Start','Latest_SP_Finished'],infer_datetime_format=True)
    df_homelessness = df_homelessness.drop_duplicates()
   
    #drop cases with negaive lenght of service use
