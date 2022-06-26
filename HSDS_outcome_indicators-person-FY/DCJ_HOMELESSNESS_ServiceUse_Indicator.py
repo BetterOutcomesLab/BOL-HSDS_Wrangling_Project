@@ -3,9 +3,9 @@ import numpy as np
 from datetime import datetime, date
 
 #change the <inputDir> as where the csv is located in your drive
-inputDir = "../HSDS/POLICE/"
+inputDir = "../HSDS/DCJ_HOMELESSNESS/"
 #change the <OutputDir> as where you want to save the indicator list
-OutputDir = "../HSDS/POLICE/"
+OutputDir = "../HSDS/DCJ_HOMELESSNESS/"
 
 outcome_file_name = "DCJ_HOMELESSNESS_ServiceUse_person_FY_indicator"
 
