@@ -192,8 +192,7 @@ if __name__ == '__main__':
 
 
       #Keep the month resolution from ReportingPeriod_YTD column and keep the first day of the month
-      df["ReportingPeriod_YTD"]=df["ReportingPeriod_YTD"].dt.strftime("%Y-%m")
-      df["ReportingPeriod_YTD"]=df["ReportingPeriod_YTD"].apply(lambda x: x+'-01')
+      df["ReportingPeriod_YTD"]=df["ReportingPeriod_YTD"].dt.strftime("%Y-%m")+'-01'
       
       df = df.rename(columns = {"ReportingPeriod_YTD": 'month'})
 
