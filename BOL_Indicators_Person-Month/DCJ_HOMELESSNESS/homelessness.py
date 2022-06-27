@@ -3,6 +3,12 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 
+
+#change the <inputDir> as where the csv is located in your drive
+inputDir = "../HSDS/input/DCJ_HOMELESSNESS/"
+#change the <OutputDir> as where you want to save the indicator list
+OutputDir = "../HSDS/output/DCJ_HOMELESSNESS/"
+
 general_cols       = ["ppn", "ReportingPeriod_YTD", "Initial_Ass_Request", "Initial_SP_Start", "Latest_SP_Finished", "Organisation_ID_hashed"]
 assist_reason_cols = ['Assist_reason14', 'Assist_reason21', 'Assist_reason24', 'Assist_reason9', 'Assist_reason13',
                     'Assist_reason15', 'Assist_reason23', 'Assist_reason17', 'Assist_reason2', 'Assist_reason3',
@@ -115,42 +121,42 @@ def RP_agg(df):
     # 53 Response categories are grouped into 10 categories (see https://www.aihw.gov.au/reports/homelessness-services/specialist-homelessness-services-annual-report/data for giudline)
 
     #Accomodation Provision
-    df['RP_AccomodationProvision'] = np.max(met_needs_agg('RP_1') , met_needs_agg('RP_2') , met_needs_agg('RP_3')).astype(np.int8)
+    df['RP_AccomodationProvision'] = pd.concat([met_needs_agg('RP_1') , met_needs_agg('RP_2') , met_needs_agg('RP_3')], axis=1).max(axis=1).astype(np.int8)
 
     #Assistance to sustain housing tenure
-    df['RP_AssistanceToSustainHousingTenure'] = np.max(met_needs_agg('RP_4') , met_needs_agg('RP_5')).astype(np.int8)
+    df['RP_AssistanceToSustainHousingTenure'] = pd.concat([met_needs_agg('RP_4') , met_needs_agg('RP_5')], axis=1).max(axis=1).astype(np.int8)
     
     #Dissability Services
-    df['RP_Dissability'] = np.max(met_needs_agg('RP_41') , met_needs_agg('RP_42')).astype(np.int8)
+    df['RP_Dissability'] = pd.concat([met_needs_agg('RP_41') , met_needs_agg('RP_42')], axis=1).max(axis=1).astype(np.int8)
 
     #Drug and Alcohol Services
-    df['RP_DrugAlcohol'] = np.max(met_needs_agg('RP_47')).astype(np.int8)
+    df['RP_DrugAlcohol'] = met_needs_agg('RP_47').astype(np.int8)
     
     #Family Services   
-    df['RP_Family'] = np.max(met_needs_agg('RP_33') , met_needs_agg('RP_35') , met_needs_agg('RP_40') , met_needs_agg('RP_34') , met_needs_agg('RP_39')).astype(
+    df['RP_Family'] = pd.concat([met_needs_agg('RP_33') , met_needs_agg('RP_35') , met_needs_agg('RP_40') , met_needs_agg('RP_34') , met_needs_agg('RP_39')], axis=1).max(axis=1).astype(
         np.int8)
 
     #General Services   
-    df['RP_General'] = np.max(
+    df['RP_General'] = pd.concat([
                 met_needs_agg('RP_21') , met_needs_agg('RP_23') , met_needs_agg('RP_6') , met_needs_agg('RP_14') , met_needs_agg('RP_13') , met_needs_agg(
             'RP_16') , met_needs_agg('RP_17') , met_needs_agg('RP_7') , met_needs_agg('RP_22') , met_needs_agg('RP_25') , met_needs_agg('RP_27') , met_needs_agg(
             'RP_20') , met_needs_agg('RP_10') , met_needs_agg('RP_8') , met_needs_agg('RP_15') , met_needs_agg('RP_29') , met_needs_agg('RP_19') , met_needs_agg(
             'RP_18') , met_needs_agg('RP_12') , met_needs_agg('RP_28') , met_needs_agg('RP_32') , met_needs_agg('RP_30') , met_needs_agg('RP_24') , met_needs_agg(
-            'RP_26') , met_needs_agg('RP_9') , met_needs_agg('RP_31')).astype(np.int8)
+            'RP_26') , met_needs_agg('RP_9') , met_needs_agg('RP_31')], axis=1).max(axis=1).astype(np.int8)
     
     #Imigration and Cultural Services   
-    df['RP_ImigrationCultural'] = np.max(
-                met_needs_agg('RP_52') , met_needs_agg('RP_50') , met_needs_agg('RP_51') , met_needs_agg('RP_49')).astype(np.int8)
+    df['RP_ImigrationCultural'] = pd.concat([
+                met_needs_agg('RP_52') , met_needs_agg('RP_50') , met_needs_agg('RP_51') , met_needs_agg('RP_49')], axis=1).max(axis=1).astype(np.int8)
     
     #Legal Finantial Services   
-    df['Need_LegalFinantial'] = np.max(
-                met_needs_agg('RP_46') , met_needs_agg('RP_45') , met_needs_agg('RP_11') , met_needs_agg('RP_44')).astype(np.int8)
+    df['Need_LegalFinantial'] = pd.concat([
+                met_needs_agg('RP_46') , met_needs_agg('RP_45') , met_needs_agg('RP_11') , met_needs_agg('RP_44')], axis=1).max(axis=1).astype(np.int8)
     
     #Mental Health Services    
-    df['RP_MentalHealth'] = np.max(met_needs_agg('RP_38') , met_needs_agg('RP_37') , met_needs_agg('RP_36')).astype(np.int8)
+    df['RP_MentalHealth'] = pd.concat([met_needs_agg('RP_38') , met_needs_agg('RP_37') , met_needs_agg('RP_36')], axis=1).max(axis=1).astype(np.int8)
     
     #Other Specialist Services    
-    df['RP_Other'] = np.max(met_needs_agg('RP_43') , met_needs_agg('RP_53') , met_needs_agg('RP_48')).astype(np.int8)
+    df['RP_Other'] = pd.concat([met_needs_agg('RP_43') , met_needs_agg('RP_53') , met_needs_agg('RP_48')], axis=1).max(axis=1).astype(np.int8)
     
     df = df.drop(RP_cols, axis=1)
     
@@ -160,14 +166,6 @@ def RP_agg(df):
   
   
   
-
-
-#change the <inputDir> as where the csv is located in your drive
-inputDir = "../HSDS/input/DCJ_HOMELESSNESS/"
-#change the <OutputDir> as where you want to save the indicator list
-OutputDir = "../HSDS/output/DCJ_HOMELESSNESS/"
-
-
 
 if __name__ == '__main__':
   
