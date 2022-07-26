@@ -57,7 +57,7 @@ def aggregate_person_month_concern_reports(df):
                                                                                 'ReportedByOther':'max'}).reset_index()
 
     df['ContactStartDateDate']=df['ContactStartDateDate'].dt.strftime("%Y-%m")+'-01'
-    df=df.rename(columns={'ContactStartDateDate': 'month'})
+    df=df.rename(columns={'PPN': 'ppn','ContactStartDateDate': 'month'})
     
     return df
 
@@ -65,7 +65,7 @@ def read_ROSH_reports_data(inputDir,file):
     print('>>>Reading the data for ROSH reports ... ' )
 
     ROSH_reports_columns=['PPN','ContactStartDateDate',
-                         'HelplineAssessmentStartDate', 
+                         'HelplineAssessmentStartDate', #there are 45% cases with missing 'HelplineAssessmentStartDate' but 'ROSHFlag' set as 'CYP is at ROSH'
                          'HA_CarerIssuesFlag',  
                          'HA_CYPIssuesFlag',  
                          'HA_DomesticViolenceFlag', 
@@ -117,7 +117,8 @@ def aggregate_person_month_ROSH(df):
 
     df['max_recorded_date'] = df['max_recorded_date'].dt.strftime("%Y-%m")+'-01'
     
-    df = df.rename(columns={'max_recorded_date': 'month',
+    df = df.rename(columns={'PPN': 'ppn',
+                            'max_recorded_date': 'month',
                             'ROSHFlag' : 'ROSH',
                             'HA_CarerIssuesFlag': 'HA_CarerIssues',
                             'HA_CYPIssuesFlag' : 'HA_CYPIssues',
@@ -199,7 +200,8 @@ def aggregate_person_month_SARA(df):
     df = df.reset_index()
     df['max_recorded_date'] = df['max_recorded_date'].dt.strftime("%Y-%m")+'-01'
 
-    df = df.rename(columns={'max_recorded_date': 'month',
+    df = df.rename(columns={'PPN': 'ppn',
+                            'max_recorded_date': 'month',
                             'FieldAssessmentPathway':'SARA',
                             'FA_DomesticViolenceFlag': 'FA_DomesticViolence',
                             'FA_EmotionalAbuseFlag':'FA_EmotionalAbuse',
@@ -225,11 +227,10 @@ def read_Safety_reports_data(inputDir, file):
                             infer_datetime_format=True)
 
     #encode SafetyOutcome
-    df_Safety[['SafetyOutcome_SafeFlag','SafetyOutcome_SafeWithPlanFlag','SafetyOutcome_Unsafe']] = 0
-
-    df_Safety.loc[df_Safety.SafetyOutcome == 'Safe', 'SafetyOutcome_SafeFlag'] = 1
-    df_Safety.loc[df_Safety.SafetyOutcome == 'Safe with plan', 'SafetyOutcome_SafeWithPlanFlag'] = 1
-    df_Safety.loc[df_Safety.SafetyOutcome == 'Unsafe', 'SafetyOutcome_Unsafe'] = 1
+    df['SaftyOutcome'] = 0
+    df_Safety.loc[df_Safety.SafetyOutcome == 'Safe', 'SafetyOutcome'] = 1
+    df_Safety.loc[df_Safety.SafetyOutcome == 'Safe with plan', 'SafetyOutcome'] = 2
+    df_Safety.loc[df_Safety.SafetyOutcome == 'Unsafe', 'SafetyOutcome'] = 3
     
     df_Safety = df_Safety.drop(['SafetyOutcome'], axis=1)
                             
@@ -244,117 +245,52 @@ def aggregate_person_month_Safety(df):
     print('>>>Aggregating person-month Safety ... ' )
 
     df = df.groupby(['PPN', pd.Grouper(key="max_recorded_date", freq="M")]).agg({
-        'SafetyOutcome_SafeFlag':"max",
-        'SafetyOutcome_SafeWithPlanFlag':"max",
-        'SafetyOutcome_Unsafe':"max"})
+        'SafetyOutcome':"max"}).reset_index()
 
-    df = df.reset_index()
-    df['SaftyOutcome'] = 'Missing/NA'
-    df.loc[df.SafetyOutcome_SafeFlag == 1 , 'SaftyOutcome'] = 'Safe'
-    df.loc[df.SafetyOutcome_SafeWithPlanFlag == 1 , 'SaftyOutcome'] = 'SafeWithPlan'
-    df.loc[df.SafetyOutcome_Unsafe == 1 , 'SaftyOutcome'] = 'Unsafe'
 
     df['max_recorded_date'] = df['max_recorded_date'].dt.strftime("%Y-%m")+'-01'
-    df = df.drop(['SafetyOutcome_SafeFlag','SafetyOutcome_SafeWithPlanFlag','SafetyOutcome_Unsafe'] , axis=1)
     
-    df = df.rename(columns={'max_recorded_date': 'month'})
+    df = df.rename(columns={'PPN': 'ppn','max_recorded_date': 'month'})
     
     return df
   
-def read_Final_RISK_reports_data(inputDir, file):
+def read_RISK_reports_data(inputDir, file):
     print('>>>Reading the data for RISK reports ... ' )
 
-    Risk_reports_columns=['PPN', 'ContactStartDateDate','RiskAssessmentStartDate','FinalRiskLevel']
+    Risk_reports_columns=['PPN', 'ContactStartDateDate','RiskAssessmentStartDate', 'AlternateAssessmentStartDate','FieldAssessmentStartDateDate', 'FinalRiskLevel']
     df_RA = pd.read_csv(inputDir+file,usecols=Risk_reports_columns, parse_dates=['ContactStartDateDate','RiskAssessmentStartDate'], infer_datetime_format=True)
 
     #take the maximum recorded date to capture the month value
-    df_RA['max_recorded_date'] = df_RA[['ContactStartDateDate','RiskAssessmentStartDate']].max(axis=1)
+    df_RA['max_recorded_date'] = df_RA[['ContactStartDateDate','FieldAssessmentStartDateDate','AlternateAssessmentStartDate','RiskAssessmentStartDate']].max(axis=1)
+    df_RA = df_RA.drop(['ContactStartDateDate','FieldAssessmentStartDateDate','AlternateAssessmentStartDate','RiskAssessmentStartDate'] , axis=1).drop_duplicates()
     
     #encode FinalRiskLevel
-    df_RA[['FinalRiskLevel_High','FinalRiskLevel_Medium/Moderate','FinalRiskLevel_VeryHigh','FinalRiskLevel_Low','FinalRiskLevel_Missing/NA'] = 0
-
-    df_RA.loc[df_RA.FinalRiskLevel == 'High', 'FinalRiskLevel_High'] = 1
-    df_RA.loc[df_RA.FinalRiskLevel == 'Medium/Moderate', 'FinalRiskLevel_Medium/Moderate'] = 1
-    df_RA.loc[df_RA.FinalRiskLevel == 'very High', 'FinalRiskLevel_VeryHigh'] = 1
-    df_RA.loc[df_RA.FinalRiskLevel == 'Low', 'FinalRiskLevel_Low'] = 1
-    df_RA.loc[df_RA.FinalRiskLevel == 'Missing/NA', 'FinalRiskLevel_Missing/NA'] = 1
+    df_RA[['FinalRiskLevel_High','FinalRiskLevel_Medium/Moderate','FinalRiskLevel_VeryHigh','FinalRiskLevel_Low','FinalRiskLevel_Missing/NA']] = 0
+    df_RA = df_RA.FinalRiskLevel.fillna('Missing/NA')
+    df_RA.loc[df_RA.FinalRiskLevel == 'High', 'FinalRiskLevel'] = 4
+    df_RA.loc[df_RA.FinalRiskLevel == 'Medium/Moderate', 'FinalRiskLevel'] = 3
+    df_RA.loc[df_RA.FinalRiskLevel == 'very High', 'FinalRiskLevel'] = 2
+    df_RA.loc[df_RA.FinalRiskLevel == 'Low', 'FinalRiskLevel'] = 1
+    df_RA.loc[df_RA.FinalRiskLevel == 'Missing/NA', 'FinalRiskLevel'] = 0
     
     df_RA = df_RA.drop(['FinalRiskLevel'], axis=1)
+    
 
     return df_RA
 
-def aggregate_person_month_Final_RISK(df):
+def aggregate_person_month_RISK(df):
     print('>>>Aggregating person-month RISK ... ' )
 
     df = df.groupby(['PPN', pd.Grouper(key="max_recorded_date", freq="M")]).agg({
-        'FinalRiskLevel_High': 'max',
-        'FinalRiskLevel_Medium/Moderate': 'max',
-        'FinalRiskLevel_VeryHigh': 'max',
-        'FinalRiskLevel_Low': 'max',
-        'FinalRiskLevel_Missing/NA': 'max'}).reset_index()
+        'FinalRiskLevel': 'max'}).reset_index()
 
     df['max_recorded_date'] = df['max_recorded_date'].dt.strftime("%Y-%m")+'-01'
-    df = df.rename(columns={'max_recorded_date': 'month'})
-    
-    return df
-
-def read_Alternate_RISK_reports_data(inputDir, file):
-    print('>>>Reading the data for Alternate RISK reports ... ' )
-
-    Alternate_Risk_reports_columns=['PPN', 'ContactStartDateDate','AlternateAssessmentStartDate','AlternateAssessmentRiskLevel']
-    df_RA = pd.read_csv(inputDir+file,usecols=Alternate_Risk_reports_columns, parse_dates=['ContactStartDateDate','RiskAssessmentStartDate'], infer_datetime_format=True)
-
-    
-    #take the maximum recorded date to capture the month value
-    df_RA['max_recorded_date'] = df_RA[['ContactStartDateDate','RiskAssessmentStartDate']].max(axis=1)
-    
-    
-    #encode FinalRiskLevel
-    df_RA[['AltRiskLevel_High','AltRiskLevel_Medium/Moderate','AltRiskLevel_VeryHigh','AltRiskLevel_Low','AltRiskLevel_Missing/NA'] = 0
-    df_RA.loc[df_RA.AlternateAssessmentRiskLevel == 'High', 'AltRiskLevel_High'] = 1
-    df_RA.loc[df_RA.AlternateAssessmentRiskLevel == 'Medium/Moderate', 'AltRiskLevel_Medium/Moderate'] = 1
-    df_RA.loc[df_RA.AlternateAssessmentRiskLevel == 'very High', 'AltRiskLevel_VeryHigh'] = 1
-    df_RA.loc[df_RA.AlternateAssessmentRiskLevel == 'Low', 'AltRiskLevel_Low'] = 1
-    df_RA.loc[df_RA.AlternateAssessmentRiskLevel == 'Missing/NA', 'AltRiskLevel_Missing/NA'] = 1
-    df_RA = df_RA.drop(['AlternateAssessmentRiskLevel'], axis=1)
-
-    return df_RA  
-
-  def aggregate_person_month_Alternate_RISK(df):
-    print('>>>Aggregating person-month Alternate RISK ... ' )
-
-    df = df.groupby(['PPN', pd.Grouper(key="max_recorded_date", freq="M")]).agg({
-        'AltRiskLevel_High': 'max',
-        'AltRiskLevel_Medium/Moderate': 'max',
-        'AltRiskLevel_VeryHigh': 'max',
-        'AltRiskLevel_Low': 'max',
-        'AltRiskLevel_Missing/NA': 'max'}).reset_index()
-        
-    df['max_recorded_date'] = df['max_recorded_date'].dt.strftime("%Y-%m")+'-01'
-    df = df.rename(columns={'max_recorded_date': 'month'})
-    
-    return df  
-  
-def summorize_person_month_Risk(df_final, df_alt):
-    print('>>>Summorizing person_month Risk ... ' )
-    df = merge_ful_join(df_final, df_alt)
-    df['RiskLevel'] = 'Missing/NA'
-    df.loc[df['AltRiskLevel_Low']==1 , 'RiskLevel']='Low'
-    df.loc[df['FinalRiskLevel_Low']==1 , 'RiskLevel']='Low'
-    df.loc[df['AltRiskLevel_Medium/Moderate']==1 , 'RiskLevel']='Medium/Moderate'
-    df.loc[df['FinalRiskLevel_Medium/Moderate']==1 , 'RiskLevel']='Medium/Moderate'
-    df.loc[df['AltRiskLevel_High']==1 , 'RiskLevel']='High'
-    df.loc[df['FinalRiskLevel_High']==1 , 'RiskLevel']='High'
-    df.loc[df['AltRiskLevel_VeryHigh']==1 , 'RiskLevel']='VeryHigh'
-    df.loc[df['FinalRiskLevel_VeryHigh']==1 , 'RiskLevel']='VeryHigh'
-    df = df.drop(['AltRiskLevel_Low','FinalRiskLevel_Low','AltRiskLevel_Medium/Moderate',
-                 'FinalRiskLevel_Medium/Moderate','AltRiskLevel_High','FinalRiskLevel_High',
-                 'AltRiskLevel_VeryHigh', 'FinalRiskLevel_VeryHigh'] , axis=1)
-    df = df.drop_duplicates()
+    df = df.rename(columns={'max_recorded_date': 'month' , 'FinalRiskLevel':'RiskLevel'}).drop_duplicates()
     df = df[df.RiskLevel != 0]
-    
+
     return df
-  
+
+
 
 def merge_full_join(df1,df2):
     df_merge=pd.merge(df1, df2, on=['PPN', 'month'], how='outer')
@@ -386,11 +322,8 @@ if __name__ == '__main__':
     df_merged=merge_full_join(df_merged,df_Safety)
     del df_Safety
 
-    df_Final_RISK=read_Final_RISK_reports_data(inputDir, file)
-    df_Final_RISK = aggregate_person_month_Final_RISK(df_Final_RISK)
-    df_Alt_RISK=read_Final_Alternate_reports_data(inputDir, file)
-    df_Alt_RISK = aggregate_person_month_Alternate_RISK(df_Alt_RISK)
-    df_RISK =  summorize_person_month_Risk(df_Final_RISK , df_Alt_RISK)
+    df_RISK=read_RISK_reports_data(inputDir, file)
+    df_RISK = aggregate_person_month_RISK(df_RISK)
     df_merged=merge_full_join(df_merged,df_RISK)
     del df_RISK
 
